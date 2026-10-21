@@ -5,7 +5,7 @@ const organizationSchema = new mongoose.Schema({
     //org name
     name: {
         type: String,
-        require: true,
+        required: true,
         unique: true,
         trim: true,
         lowercase: true,
@@ -14,7 +14,7 @@ const organizationSchema = new mongoose.Schema({
     //description of the org (like what they do and stuff)
     description: {
         type: String,
-        default: true,
+        required: true,
     },
 
     //is this organization active or dormant/shutdown ettc
