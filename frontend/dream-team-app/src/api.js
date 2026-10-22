@@ -36,7 +36,9 @@ async function request(path, options = {}) {
 
   // fetch does NOT throw on 400/401/500, so we do it ourselves.
   if (!res.ok) {
-    throw new Error(data?.message || `Request failed (${res.status})`);
+    const err = new Error(data?.message || `Request failed (${res.status})`);
+    err.data = data; // keep the full response (e.g. missingColumns) for pages that want it
+    throw err;
   }
   return data;
 }

@@ -79,3 +79,17 @@
   padding: 0.6rem 0.8rem;
   font-size: 0.9rem;
 }
+
+/* ---- Upload form ---- */
+.upload-form { display: flex; flex-direction: column; gap: 1rem; max-width: 420px; }
+.upload-form .btn { align-self: flex-start; padding: 0.6rem 1.5rem; }
+.success-message {
+  background: #e7f6ec;
+  color: #1a7f37;
+  border: 1px solid #b7e4c7;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+}
+.upload-help { margin-top: 1.5rem; font-size: 0.9rem; max-width: 420px; }
+.upload-help p { word-break: break-word; color: #4b5563; }
