@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import Input from "../components/Input";
+import Button from "../components/Button";
 
 function Register() {
-  // One state object holds every field, instead of one useState per field.
   const [form, setForm] = useState({
     email: "",
     phone: "",
@@ -20,7 +21,7 @@ function Register() {
   function handleSubmit(e) {
     e.preventDefault();
 
-    // Same rules the backend User model has (passwordHash minLength: 9)
+    // Same rule as the backend User model (passwordHash minLength: 9)
     if (form.password.length < 9) {
       setError("Password must be at least 9 characters.");
       return;
@@ -31,7 +32,7 @@ function Register() {
     }
 
     setError("");
-    // Later: send the form to the backend's register route.
+    // Later: await post("/auth/register", form) using the helper in api.js
     console.log("Register attempt:", form);
   }
 
@@ -41,35 +42,15 @@ function Register() {
       <h2>Create an account</h2>
 
       <form onSubmit={handleSubmit}>
-        <label>
-          Email
-          <input type="email" name="email" value={form.email} onChange={handleChange} required />
-        </label>
+        <Input label="Email" type="email" name="email" value={form.email} onChange={handleChange} required />
+        <Input label="Phone" type="tel" name="phone" value={form.phone} onChange={handleChange} required />
+        <Input label="Organization" type="text" name="organization" value={form.organization} onChange={handleChange} required />
+        <Input label="Password" type="password" name="password" value={form.password} onChange={handleChange} required />
+        <Input label="Confirm password" type="password" name="confirmPassword" value={form.confirmPassword} onChange={handleChange} required />
 
-        <label>
-          Phone
-          <input type="tel" name="phone" value={form.phone} onChange={handleChange} required />
-        </label>
-
-        <label>
-          Organization
-          <input type="text" name="organization" value={form.organization} onChange={handleChange} required />
-        </label>
-
-        <label>
-          Password
-          <input type="password" name="password" value={form.password} onChange={handleChange} required />
-        </label>
-
-        <label>
-          Confirm password
-          <input type="password" name="confirmPassword" value={form.confirmPassword} onChange={handleChange} required />
-        </label>
-
-        {/* Only shows when error is not an empty string */}
         {error && <p className="form-error">{error}</p>}
 
-        <button type="submit">Register</button>
+        <Button type="submit">Register</Button>
       </form>
 
       <p className="form-switch">

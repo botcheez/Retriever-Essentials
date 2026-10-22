@@ -1,20 +1,23 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import Input from "../components/Input";
+import Button from "../components/Button";
 
-// A component is just a function that returns JSX (HTML-like markup).
 function Login() {
-  // useState remembers values between renders.
-  // [currentValue, functionToChangeIt] = useState(startingValue)
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate(); // lets us change pages from code
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  // Runs when the form is submitted.
   function handleSubmit(event) {
-    event.preventDefault(); // stop the browser from reloading the page
-    // Later this is where we will send email + password to the backend.
-    console.log("Login attempt:", email, password);
-    // TEMPORARY: go straight to the dashboard. Replace with a real login check.
+    event.preventDefault();
+
+    // TEMPORARY FAKE LOGIN: replace with the real backend call once the
+    // auth route exists, e.g.:
+    //   const data = await post("/auth/login", { email, password });
+    //   login(data.user, data.token);
+    login({ email }, "fake-token");
     navigate("/dashboard");
   }
 
@@ -24,27 +27,21 @@ function Login() {
       <h2>Log in</h2>
 
       <form onSubmit={handleSubmit}>
-        <label>
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </label>
-
-        <label>
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </label>
-
-        <button type="submit">Log in</button>
+        <Input
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <Input
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <Button type="submit">Log in</Button>
       </form>
 
       <p className="form-switch">
