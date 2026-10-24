@@ -15,6 +15,11 @@ const REQUIRED_COLUMNS = [
 
 const MAX_SIZE_MB = 5; // the backend rejects bigger files
 
+// File types the form lets users pick. NOTE: the backend currently only
+// accepts .csv, so Excel files will be sent but rejected with a message.
+// Remove ".xlsx" and ".xls" here if you want the browser to block them instead.
+const ALLOWED_EXTENSIONS = [".csv", ".xlsx", ".xls"];
+
 function DashboardHome() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -39,8 +44,9 @@ function DashboardHome() {
       setError("Please choose a file first.");
       return;
     }
-    if (!file.name.toLowerCase().endsWith(".csv")) {
-      setError("Only CSV files are supported right now.");
+    const name = file.name.toLowerCase();
+    if (!ALLOWED_EXTENSIONS.some((ext) => name.endsWith(ext))) {
+      setError("Please choose a CSV or Excel file (.csv, .xlsx, .xls).");
       return;
     }
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
@@ -80,7 +86,7 @@ function DashboardHome() {
         <input
           key={inputKey}
           type="file"
-          accept=".csv"
+          accept={ALLOWED_EXTENSIONS.join(",")}
           onChange={handleFileChange}
           disabled={loading}
         />
