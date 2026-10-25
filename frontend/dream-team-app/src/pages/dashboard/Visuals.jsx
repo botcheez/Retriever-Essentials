@@ -1,14 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { mockVisualsData } from "../../mockData"; // Adjust path to mockData as needed
+import {
+  ComposedChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { mockVisualsData } from "../../mockData"; // Adjust path as needed
 
 const Visuals = () => {
+  // STATE MANAGEMENT
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Filter States
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
+  // LOAD MOCK DATA
   useEffect(() => {
     const timer = setTimeout(() => {
       setData(mockVisualsData);
@@ -19,6 +33,7 @@ const Visuals = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // FILTERING LOGIC
   useEffect(() => {
     let updated = [...data];
 
@@ -39,6 +54,7 @@ const Visuals = () => {
     setFilteredData(updated);
   }, [searchTerm, selectedCategory, data]);
 
+  // CALCULATIONS FOR METRIC CARDS
   const totalItems = filteredData.length;
   const totalValue = filteredData.reduce(
     (acc, curr) => acc + (Number(curr.quantity || curr.value) || 0),
@@ -55,6 +71,24 @@ const Visuals = () => {
     ),
   ];
 
+  // TRANSFORM DATA FOR RECHARTS COMBO CHART
+  // Aggregates total quantity (Bars) and total count/visits (Line) grouped by College
+  const chartDataMap = filteredData.reduce((acc, curr) => {
+    const college = curr.college || "Other";
+    const qty = Number(curr.quantity || curr.value) || 0;
+
+    if (!acc[college]) {
+      acc[college] = { college, totalQuantity: 0, totalVisits: 0 };
+    }
+
+    acc[college].totalQuantity += qty;
+    acc[college].totalVisits += 1;
+    return acc;
+  }, {});
+
+  const chartData = Object.values(chartDataMap);
+
+  // HELPER: Exclude internal Mongo metadata keys
   const getDisplayKeys = (obj) => {
     if (!obj) return [];
     return Object.keys(obj).filter(
@@ -66,12 +100,12 @@ const Visuals = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h2>Dashboard Visuals</h2>
+      <h2>Retriever Essentials - Analytics Dashboard</h2>
 
       {/* METRIC CARDS */}
       <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
         <div style={cardStyle}>
-          <h4>Total Records</h4>
+          <h4>Total Visits / Events</h4>
           <p style={metricStyle}>{totalItems}</p>
         </div>
         <div style={cardStyle}>
@@ -79,9 +113,61 @@ const Visuals = () => {
           <p style={metricStyle}>{totalValue.toLocaleString()}</p>
         </div>
         <div style={cardStyle}>
-          <h4>Average / Record</h4>
+          <h4>Average / Activity</h4>
           <p style={metricStyle}>{averageValue}</p>
         </div>
+      </div>
+
+      {/* COMBO CHART (BAR + LINE CHART) */}
+      <div style={chartCardStyle}>
+        <h3>Impact Trends by College</h3>
+        <p style={{ color: "#6c757d", fontSize: "14px", marginBottom: "20px" }}>
+          Bars represent total item quantity distributed; line represents total student visits.
+        </p>
+
+        {chartData.length === 0 ? (
+          <p>No chart data available for the current filters.</p>
+        ) : (
+          <div style={{ width: "100%", height: 350 }}>
+            <ResponsiveContainer>
+              <ComposedChart
+                data={chartData}
+                margin={{ top: 20, right: 30, bottom: 20, left: 10 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
+                <XAxis dataKey="college" stroke="#555" />
+                <YAxis yAxisId="left" stroke="#5c6ac4" />
+                <YAxis yAxisId="right" orientation="right" stroke="#e67e22" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#fff",
+                    borderRadius: "8px",
+                    border: "1px solid #ccc",
+                  }}
+                />
+                <Legend wrapperStyle={{ paddingTop: "10px" }} />
+                <Bar
+                  yAxisId="left"
+                  dataKey="totalQuantity"
+                  name="Total Quantity"
+                  fill="#5c6ac4"
+                  radius={[6, 6, 0, 0]}
+                  barSize={40}
+                />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="totalVisits"
+                  name="Student Visits"
+                  stroke="#e67e22"
+                  strokeWidth={3}
+                  dot={{ r: 5, fill: "#e67e22" }}
+                  activeDot={{ r: 8 }}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       {/* CONTROLS */}
@@ -106,7 +192,7 @@ const Visuals = () => {
         </select>
       </div>
 
-      {/* TABLE */}
+      {/* DATA TABLE */}
       <div style={{ overflowX: "auto" }}>
         {filteredData.length === 0 ? (
           <p>No data available matching your criteria.</p>
@@ -141,6 +227,7 @@ const Visuals = () => {
   );
 };
 
+// INLINE STYLES
 const cardStyle = {
   flex: "1",
   padding: "15px",
@@ -148,6 +235,15 @@ const cardStyle = {
   backgroundColor: "#f8f9fa",
   border: "1px solid #e9ecef",
   textAlign: "center",
+};
+
+const chartCardStyle = {
+  padding: "20px",
+  borderRadius: "8px",
+  backgroundColor: "#ffffff",
+  border: "1px solid #e9ecef",
+  boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+  marginBottom: "25px",
 };
 
 const metricStyle = {
@@ -175,5 +271,4 @@ const cellStyle = {
   textAlign: "left",
 };
 
-// ONLY ONE DEFAULT EXPORT HERE AT THE BOTTOM:
 export default Visuals;
