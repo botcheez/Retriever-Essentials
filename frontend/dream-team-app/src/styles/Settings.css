@@ -5,6 +5,10 @@
   max-width: 560px;
 }
 
+.settings-card {
+  border-left: 5px solid var(--umbc-yellow);
+}
+
 .settings-card h2 {
   margin: 0 0 4px;
   font-size: 20px;
@@ -94,4 +98,28 @@
 .settings-form .btn:focus-visible {
   outline: 2px solid var(--umbc-black);
   outline-offset: 2px;
+}
+
+.settings-card.settings-danger {
+  border-left-color: #c40000;
+}
+
+.settings-card .btn-danger,
+.settings-form .btn-danger {
+  background: #c40000;
+  color: white;
+}
+
+.settings-card .btn-danger:hover:not(:disabled),
+.settings-form .btn-danger:hover:not(:disabled) {
+  background: #9e0000;
+}
+
+.settings-warning {
+  margin: 0;
+  background: #fff0f0;
+  border-left: 4px solid #c40000;
+  padding: 12px;
+  border-radius: 5px;
+  font-size: 14px;
 }

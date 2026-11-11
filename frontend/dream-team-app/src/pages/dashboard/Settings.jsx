@@ -7,11 +7,13 @@ import ErrorMessage from "../../components/ErrorMessage";
 import Modal from "../../components/Modal";
 import "../../styles/Settings.css";
 
+// for when connecting backend
 const NOT_AVAILABLE = "Saving isn't available yet. The server doesn't support this change.";
 
 function Settings() {
   const { user } = useAuth();
 
+  // contact info
   const [contact, setContact] = useState({
     email: user?.email || "",
     phone: user?.phone || "",
@@ -19,6 +21,7 @@ function Settings() {
   const [contactError, setContactError] = useState("");
   const [contactNotice, setContactNotice] = useState("");
 
+  // password popup
   const [passwordStep, setPasswordStep] = useState(null);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPasswords, setNewPasswords] = useState({
@@ -29,6 +32,13 @@ function Settings() {
   const [passwordNotice, setPasswordNotice] = useState("");
   const [verifying, setVerifying] = useState(false);
   const verifyRequest = useRef(0);
+
+  // delete account popup
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [deleteNotice, setDeleteNotice] = useState("");
 
   const contactChanged =
     contact.email.trim().toLowerCase() !== (user?.email || "") ||
@@ -53,6 +63,7 @@ function Settings() {
     }
 
     setContactError("");
+    // TODO: backend route for contacts
     setContactNotice(NOT_AVAILABLE);
   }
 
@@ -87,6 +98,7 @@ function Settings() {
     setVerifying(true);
     setPasswordError("");
 
+    // filler for when we get an actual route to update password
     try {
       await post("/auth/login", { email: user.email, password: currentPassword });
       if (requestId !== verifyRequest.current) return;
@@ -126,6 +138,40 @@ function Settings() {
     setPasswordError("");
     setPasswordNotice(NOT_AVAILABLE);
   }
+
+  function openDeleteModal() {
+    setDeleteConfirm("");
+    setDeletePassword("");
+    setDeleteError("");
+    setDeleteNotice("");
+    setDeleteOpen(true);
+  }
+
+  function closeDeleteModal() {
+    setDeleteOpen(false);
+    setDeleteConfirm("");
+    setDeletePassword("");
+    setDeleteError("");
+    setDeleteNotice("");
+  }
+
+  function handleDeleteSubmit(e) {
+    e.preventDefault();
+
+    if (deleteConfirm !== "DELETE") {
+      setDeleteError('Type DELETE in capital letters to confirm.');
+      return;
+    }
+    if (!deletePassword) {
+      setDeleteError("Enter your password.");
+      return;
+    }
+
+    setDeleteError("");
+    setDeleteNotice(NOT_AVAILABLE);
+  }
+
+  const canDelete = deleteConfirm === "DELETE" && deletePassword !== "";
 
   return (
     <div>
@@ -173,6 +219,16 @@ function Settings() {
           <Button type="button" onClick={openPasswordModal}>
             Change password
           </Button>
+        </section>
+
+        <section className="dashboard-card settings-card settings-danger">
+          <h2>Delete account</h2>
+          <p className="settings-hint">
+            Permanently delete your account. This can't be undone.
+          </p>
+          <button type="button" className="btn btn-danger" onClick={openDeleteModal}>
+            Delete account
+          </button>
         </section>
       </div>
 
@@ -248,6 +304,56 @@ function Settings() {
             </div>
           </form>
         )}
+      </Modal>
+
+      <Modal open={deleteOpen} title="Delete your account?" onClose={closeDeleteModal}>
+        <form className="settings-form" onSubmit={handleDeleteSubmit}>
+          <p className="settings-warning">
+            Your account ({user?.email}) will be permanently deleted and you'll be logged out.
+            This can't be undone.
+          </p>
+          <Input
+            id="settings-delete-confirm"
+            label="Type DELETE to confirm"
+            type="text"
+            name="deleteConfirm"
+            autoComplete="off"
+            value={deleteConfirm}
+            onChange={(e) => {
+              setDeleteConfirm(e.target.value);
+              setDeleteError("");
+              setDeleteNotice("");
+            }}
+            autoFocus
+            required
+          />
+          <Input
+            id="settings-delete-password"
+            label="Password"
+            type="password"
+            name="deletePassword"
+            autoComplete="current-password"
+            value={deletePassword}
+            onChange={(e) => {
+              setDeletePassword(e.target.value);
+              setDeleteError("");
+              setDeleteNotice("");
+            }}
+            required
+          />
+
+          <ErrorMessage message={deleteError} />
+          {deleteNotice && <p className="settings-notice">{deleteNotice}</p>}
+
+          <div className="modal-actions">
+            <button type="button" className="btn btn-secondary" onClick={closeDeleteModal}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-danger" disabled={!canDelete}>
+              Delete account
+            </button>
+          </div>
+        </form>
       </Modal>
     </div>
   );
