@@ -1,6 +1,6 @@
 import express, { json } from "express";
-import Organization from "../models/Organization.js";
-import protectRoute from "../middleware/auth.middleware.js";
+import Organization from "../models/Organization";
+import protectRoute from "../middleware/auth.middleware";
 
 const router = express.Router();
 
