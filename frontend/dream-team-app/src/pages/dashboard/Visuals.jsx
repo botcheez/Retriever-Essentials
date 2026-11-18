@@ -30,7 +30,7 @@ const Visuals = () => {
 
   // Advanced Filter States
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedOrg, setSelectedOrg] = useState("All");
+  const [selectedUnitCode, setSelectedUnitCode] = useState("All");
   const [selectedActivityType, setSelectedActivityType] = useState("All");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -57,47 +57,35 @@ const Visuals = () => {
     loadData();
   }, []);
 
-  // Helper to consistently extract organization code from a record
-  const getOrgCode = (item) => {
-    const code =
-      item?.organization_code ||
-      item?.organizationCode ||
-      item?.org_code ||
-      item?.orgCode ||
-      (typeof item?.organization === "string"
-        ? item.organization
-        : item?.organization?.code || item?.organization?.organization_code);
-
-    return code && String(code).trim() !== ""
-      ? String(code).trim()
+  // Helper to consistently extract unit_code (organization code)
+  const getUnitCode = (item) => {
+    return item?.unit_code && String(item.unit_code).trim() !== ""
+      ? String(item.unit_code).trim()
       : "Unassigned";
   };
 
-  // Helper to normalize a record's date into YYYY-MM-DD for range comparisons
+  // Helper to normalize activity_date into YYYY-MM-DD for range comparisons
   const getNormalizedDateStr = (item) => {
-    const raw = item?.activity_date || item?.date || item?.createdAt;
-    if (!raw) return "";
-    const parsed = new Date(raw);
+    if (!item?.activity_date) return "";
+    const parsed = new Date(item.activity_date);
     if (Number.isNaN(parsed.getTime())) return "";
     return parsed.toISOString().split("T")[0];
   };
 
   // Unique dropdown options derived from loaded data
-  const organizationOptions = useMemo(() => {
-    const codes = new Set(data.map((item) => getOrgCode(item)));
+  const unitCodeOptions = useMemo(() => {
+    const codes = new Set(data.map((item) => getUnitCode(item)));
     return ["All", ...Array.from(codes).sort()];
   }, [data]);
 
   const activityTypeOptions = useMemo(() => {
     const types = new Set(
-      data
-        .map((item) => item.activity_type || item.category)
-        .filter(Boolean)
+      data.map((item) => item.activity_type).filter(Boolean)
     );
     return ["All", ...Array.from(types).sort()];
   }, [data]);
 
-  // ADVANCED FILTERING LOGIC (applies to metric cards, charts, and org tables)
+  // ADVANCED FILTERING LOGIC (applies to metric cards, charts, and unit_code tables)
   const filteredData = useMemo(() => {
     return data.filter((item) => {
       // 1. Keyword Search
@@ -108,18 +96,14 @@ const Visuals = () => {
         if (!matchesSearch) return false;
       }
 
-      // 2. Organization Code Filter
-      if (selectedOrg !== "All") {
-        if (getOrgCode(item) !== selectedOrg) return false;
+      // 2. Organization / Unit Code Filter
+      if (selectedUnitCode !== "All") {
+        if (getUnitCode(item) !== selectedUnitCode) return false;
       }
 
       // 3. Activity Type Filter
       if (selectedActivityType !== "All") {
-        const itemType = (
-          item.activity_type ||
-          item.category ||
-          ""
-        ).toLowerCase();
+        const itemType = (item.activity_type || "").toLowerCase();
         if (itemType !== selectedActivityType.toLowerCase()) return false;
       }
 
@@ -132,7 +116,7 @@ const Visuals = () => {
       }
 
       // 5. Quantity Range Filter (inclusive)
-      const qty = Number(item.quantity ?? item.value);
+      const qty = Number(item.quantity);
       if (minQuantity !== "") {
         if (Number.isNaN(qty) || qty < Number(minQuantity)) return false;
       }
@@ -145,7 +129,7 @@ const Visuals = () => {
   }, [
     data,
     searchTerm,
-    selectedOrg,
+    selectedUnitCode,
     selectedActivityType,
     startDate,
     endDate,
@@ -156,7 +140,7 @@ const Visuals = () => {
   // Count active filters for badge & reset button state
   const activeFilterCount = [
     searchTerm.trim() !== "",
-    selectedOrg !== "All",
+    selectedUnitCode !== "All",
     selectedActivityType !== "All",
     startDate !== "",
     endDate !== "",
@@ -166,7 +150,7 @@ const Visuals = () => {
 
   const handleResetFilters = () => {
     setSearchTerm("");
-    setSelectedOrg("All");
+    setSelectedUnitCode("All");
     setSelectedActivityType("All");
     setStartDate("");
     setEndDate("");
@@ -174,34 +158,34 @@ const Visuals = () => {
     setMaxQuantity("");
   };
 
-  // GROUP FILTERED DATA INTO SEPARATE TABLES BY ORGANIZATION CODE
-  const groupedByOrg = useMemo(() => {
+  // GROUP FILTERED DATA INTO SEPARATE TABLES BY UNIT_CODE
+  const groupedByUnitCode = useMemo(() => {
     const groups = filteredData.reduce((acc, row) => {
-      const orgCode = getOrgCode(row);
-      const qty = Number(row.quantity ?? row.value) || 0;
+      const unitCode = getUnitCode(row);
+      const qty = Number(row.quantity) || 0;
 
-      if (!acc[orgCode]) {
-        acc[orgCode] = {
-          orgCode,
+      if (!acc[unitCode]) {
+        acc[unitCode] = {
+          unitCode,
           rows: [],
           totalQuantity: 0,
         };
       }
 
-      acc[orgCode].rows.push(row);
-      acc[orgCode].totalQuantity += qty;
+      acc[unitCode].rows.push(row);
+      acc[unitCode].totalQuantity += qty;
       return acc;
     }, {});
 
     return Object.values(groups).sort((a, b) =>
-      a.orgCode.localeCompare(b.orgCode)
+      a.unitCode.localeCompare(b.unitCode)
     );
   }, [filteredData]);
 
   // CALCULATIONS FOR METRIC CARDS
   const totalItems = filteredData.length;
   const totalValue = filteredData.reduce(
-    (acc, curr) => acc + (Number(curr.quantity ?? curr.value) || 0),
+    (acc, curr) => acc + (Number(curr.quantity) || 0),
     0
   );
   const averageValue = totalItems > 0 ? (totalValue / totalItems).toFixed(2) : 0;
@@ -209,7 +193,7 @@ const Visuals = () => {
   // TRANSFORM DATA FOR RECHARTS COMBO CHART
   const chartDataMap = filteredData.reduce((acc, curr) => {
     const college = curr.college || "Other";
-    const qty = Number(curr.quantity ?? curr.value) || 0;
+    const qty = Number(curr.quantity) || 0;
 
     if (!acc[college]) {
       acc[college] = { college, totalQuantity: 0, totalVisits: 0 };
@@ -318,7 +302,7 @@ const Visuals = () => {
     })
     .filter(Boolean);
 
-  // HELPER: Exclude internal Mongo metadata keys (and organization_code since each table is already grouped by it)
+  // HELPER: Exclude internal Mongo metadata keys & unit_code (already shown in each table header)
   const getDisplayKeys = (obj) => {
     if (!obj) return [];
 
@@ -328,8 +312,7 @@ const Visuals = () => {
       "createdAt",
       "updatedAt",
       "organization",
-      "organization_code",
-      "organizationCode",
+      "unit_code",
       "uploadedBy",
       "fileName",
       "fileType",
@@ -338,11 +321,12 @@ const Visuals = () => {
     return Object.keys(obj).filter((key) => !hiddenFields.includes(key));
   };
 
-  // Format cell values cleanly (including ISO dates)
+  // Format cell values cleanly (dates, booleans, empty strings)
   const formatCellValue = (key, value) => {
     if (value === null || value === undefined || value === "") return "—";
+    if (typeof value === "boolean") return value ? "Yes" : "No";
     if (typeof value === "object") return JSON.stringify(value);
-    if (key.toLowerCase().includes("date")) {
+    if (key === "activity_date") {
       const d = new Date(value);
       if (!Number.isNaN(d.getTime())) return d.toLocaleDateString();
     }
@@ -393,22 +377,22 @@ const Visuals = () => {
             <label style={labelStyle}>Keyword Search</label>
             <input
               type="text"
-              placeholder="Search any field..."
+              placeholder="Search event, college, term..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={inputStyle}
             />
           </div>
 
-          {/* Organization Code */}
+          {/* Organization / Unit Code */}
           <div style={filterGroupStyle}>
-            <label style={labelStyle}>Organization Code</label>
+            <label style={labelStyle}>Organization (Unit Code)</label>
             <select
-              value={selectedOrg}
-              onChange={(e) => setSelectedOrg(e.target.value)}
+              value={selectedUnitCode}
+              onChange={(e) => setSelectedUnitCode(e.target.value)}
               style={inputStyle}
             >
-              {organizationOptions.map((code) => (
+              {unitCodeOptions.map((code) => (
                 <option key={code} value={code}>
                   {code === "All" ? "All Organizations" : code}
                 </option>
@@ -500,7 +484,7 @@ const Visuals = () => {
         </div>
         <div style={cardStyle}>
           <h4>Organizations Shown</h4>
-          <p style={metricStyle}>{groupedByOrg.length}</p>
+          <p style={metricStyle}>{groupedByUnitCode.length}</p>
         </div>
       </div>
 
@@ -707,13 +691,13 @@ const Visuals = () => {
         )}
       </div>
 
-      {/* SEPARATE DATA TABLES PER ORGANIZATION CODE */}
+      {/* SEPARATE DATA TABLES PER UNIT_CODE (ORGANIZATION CODE) */}
       <div style={{ marginTop: "30px" }}>
         <h3 style={{ marginBottom: "15px" }}>
-          Records by Organization Code ({groupedByOrg.length})
+          Records by Organization Code ({groupedByUnitCode.length})
         </h3>
 
-        {groupedByOrg.length === 0 ? (
+        {groupedByUnitCode.length === 0 ? (
           <div style={emptyStateStyle}>
             <p style={{ margin: "0 0 10px 0" }}>
               No data available matching your filter criteria.
@@ -727,16 +711,16 @@ const Visuals = () => {
             </button>
           </div>
         ) : (
-          groupedByOrg.map((group) => {
+          groupedByUnitCode.map((group) => {
             const displayKeys = getDisplayKeys(group.rows[0]);
 
             return (
-              <div key={group.orgCode} style={orgSectionCardStyle}>
+              <div key={group.unitCode} style={orgSectionCardStyle}>
                 <div style={orgSectionHeaderStyle}>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <span style={orgBadgeStyle}>{group.orgCode}</span>
+                    <span style={orgBadgeStyle}>{group.unitCode}</span>
                     <h4 style={{ margin: 0, fontSize: "16px", color: "#111111" }}>
-                      Organization Code: {group.orgCode}
+                      Unit / Organization Code: {group.unitCode}
                     </h4>
                   </div>
 
