@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { upload } from "../../api";
+import { useState, useEffect } from "react";
+import { upload, get } from "../../api";
 import Loading from "../../components/Loading";
 import ErrorMessage from "../../components/ErrorMessage";
 import Button from "../../components/Button";
@@ -26,8 +26,35 @@ function DashboardHome() {
   const [error, setError] = useState("");
   const [missingColumns, setMissingColumns] = useState([]);
   const [success, setSuccess] = useState("");
+
   // Changing this key makes React rebuild the file input, which clears it.
   const [inputKey, setInputKey] = useState(0);
+
+  //upload history
+  const [uploadHistory, setUploadHistory] = useState([]);
+
+  async function loadUploadHistory() {
+
+    try {
+
+        const result = await get("/data/uploads");
+
+        setUploadHistory(result.uploads);
+
+    }
+
+    catch (err) {
+
+        console.log("Error loading upload history:", err);
+    }
+  }
+
+  //load upload history when the page opens
+  useEffect(() => {
+
+    loadUploadHistory();
+
+  }, []);
 
   function handleFileChange(e) {
     setFile(e.target.files[0] || null);
@@ -67,6 +94,7 @@ function DashboardHome() {
       const result = await upload("/data/upload", formData);
 
       setSuccess(`${result.message}: ${result.recordsSaved} records saved from ${result.fileName}.`);
+      await loadUploadHistory();
       setFile(null);
       setInputKey((k) => k + 1); // clear the file picker
     } catch (err) {
@@ -79,7 +107,7 @@ function DashboardHome() {
 
   return (
     <div>
-      <h1>Home</h1>
+      <h1>Uploads</h1>
 
       <h2>Upload data</h2>
       <form className="upload-form" onSubmit={handleSubmit}>
@@ -108,6 +136,72 @@ function DashboardHome() {
         {success && <div className="success-message">{success}</div>}
       </form>
 
+      {/* History table */}
+      <h2 style={{ marginTop: "40px" }}>Recent Uploads</h2>
+
+      {uploadHistory.length === 0 ? (
+
+          <p>No files have been uploaded yet.</p>
+
+      ) : (
+
+          <div style={{ overflowX: "auto" }}>
+
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+
+                  <thead>
+                      <tr>
+                          <th style={uploadCellStyle}>File</th>
+                          <th style={uploadCellStyle}>Type</th>
+                          <th style={uploadCellStyle}>Records</th>
+                          <th style={uploadCellStyle}>Size</th>
+                          <th style={uploadCellStyle}>Uploaded By</th>
+                          <th style={uploadCellStyle}>Date</th>
+                      </tr>
+                  </thead>
+
+                  <tbody>
+
+                      {uploadHistory.map((item) => (
+
+                          <tr key={item._id}>
+
+                              <td style={uploadCellStyle}>
+                                  {item.fileName}
+                              </td>
+
+                              <td style={uploadCellStyle}>
+                                  {item.fileType.toUpperCase()}
+                              </td>
+
+                              <td style={uploadCellStyle}>
+                                  {item.recordsUploaded}
+                              </td>
+
+                              <td style={uploadCellStyle}>
+                                  {(item.fileSize / 1024).toFixed(1)} KB
+                              </td>
+
+                              <td style={uploadCellStyle}>
+                                  {item.uploadedBy?.email || "Unknown"}
+                              </td>
+
+                              <td style={uploadCellStyle}>
+                                  {new Date(item.createdAt).toLocaleString()}
+                              </td>
+
+                          </tr>
+
+                      ))}
+
+                  </tbody>
+
+              </table>
+
+          </div>
+
+      )}
+
       <details className="upload-help">
         <summary>Which columns does my CSV need?</summary>
         <p>{REQUIRED_COLUMNS.join(", ")}</p>
@@ -115,5 +209,11 @@ function DashboardHome() {
     </div>
   );
 }
+
+const uploadCellStyle = {
+    border: "1px solid #ddd",
+    padding: "10px",
+    textAlign: "left"
+};
 
 export default DashboardHome;

@@ -5,6 +5,7 @@ import { Readable } from "stream";
 import path from "path";
 
 import Data from "../models/Data.js";
+import Upload from "../models/Upload.js";
 import protectRoute from "../middleware/auth.middleware.js";
 
 const router = express.Router();
@@ -266,6 +267,24 @@ router.post(
             //save every row to MongoDB
             const savedRecords = await Data.insertMany(records);
 
+            //save the upload itself so we can display upload history
+            await Upload.create({
+
+                organization: req.user.organization,
+
+                uploadedBy: req.user._id,
+
+                fileName: req.file.originalname,
+
+                fileType: path.extname(req.file.originalname)
+                    .replace(".", "")
+                    .toLowerCase(),
+
+                fileSize: req.file.size,
+
+                recordsUploaded: records.length
+            });
+
 
             return res.status(201).json({
                 message: "File uploaded successfully",
@@ -287,5 +306,77 @@ router.post(
     }
 );
 
+//get all data for the logged in user's organization
+router.get("/", protectRoute, async (req, res) => {
+
+    try {
+
+        //make sure the user belongs to an organization
+        if (!req.user.organization) {
+            return res.status(400).json({
+                message: "User is not associated with an organization"
+            });
+        }
+
+        //only return data belonging to this user's organization
+        const records = await Data.find({
+            organization: req.user.organization
+        }).sort({ activity_date: 1 });
+
+        return res.status(200).json({
+            count: records.length,
+            data: records
+        });
+
+    }
+
+    catch (error) {
+
+        console.log("Error retrieving data:", error);
+
+        return res.status(500).json({
+            message: "Failed to retrieve data",
+            error: error.message
+        });
+    }
+});
+
+//get upload history for the logged in user's organization
+router.get("/uploads", protectRoute, async (req, res) => {
+
+    try {
+
+        if (!req.user.organization) {
+
+            return res.status(400).json({
+                message: "User is not associated with an organization"
+            });
+        }
+
+
+        const uploads = await Upload.find({
+            organization: req.user.organization
+        })
+        .populate("uploadedBy", "email")
+        .sort({ createdAt: -1 });
+
+
+        return res.status(200).json({
+            count: uploads.length,
+            uploads
+        });
+
+    }
+
+    catch (error) {
+
+        console.log("Error retrieving upload history:", error);
+
+        return res.status(500).json({
+            message: "Failed to retrieve upload history",
+            error: error.message
+        });
+    }
+});
 
 export default router;

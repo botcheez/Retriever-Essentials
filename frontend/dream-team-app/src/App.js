@@ -5,10 +5,11 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import DashboardLayout from "./pages/dashboard/DashboardLayout";
-import DashboardHome from "./pages/dashboard/DashboardHome";
 import Profile from "./pages/dashboard/Profile";
 import Settings from "./pages/dashboard/Settings";
 import Visuals from "./pages/dashboard/Visuals";
+import Overview from "./pages/dashboard/Overview";
+import DashboardHome from "./pages/dashboard/DashboardHome";
 
 // BrowserRouter turns on URL-based routing for everything inside it.
 // Routes looks at the current URL and shows the first Route that matches.
@@ -28,10 +29,11 @@ function App() {
               Logged-out users are redirected to /login. */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<DashboardHome />} />
+              <Route index element={<Overview />} />
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<Settings />} />
               <Route path="visuals" element={<Visuals />} />
+              <Route path="uploads" element={<DashboardHome />} />
             </Route>
           </Route>
 

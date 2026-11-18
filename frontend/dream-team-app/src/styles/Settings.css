@@ -1,0 +1,125 @@
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 560px;
+}
+
+.settings-card {
+  border-left: 5px solid var(--umbc-yellow);
+}
+
+.settings-card h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.settings-hint {
+  margin: 0 0 18px;
+  color: var(--umbc-gray);
+  font-size: 14px;
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--umbc-black);
+}
+
+.settings-form .field input {
+  padding: 10px 12px;
+  font-size: 15px;
+  font-weight: 400;
+  border: 1px solid var(--umbc-border);
+  border-radius: 6px;
+}
+
+.settings-form .field input:focus {
+  outline: 2px solid var(--umbc-yellow);
+  outline-offset: 1px;
+  border-color: var(--umbc-yellow-dark);
+}
+
+.settings-card .btn,
+.settings-form .btn {
+  align-self: flex-start;
+  background: var(--umbc-yellow);
+  color: var(--umbc-black);
+  border: none;
+  border-radius: 6px;
+  padding: 11px 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.settings-card .btn:hover:not(:disabled),
+.settings-form .btn:hover:not(:disabled) {
+  background: var(--umbc-yellow-dark);
+}
+
+.settings-card .btn:disabled,
+.settings-form .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings-form .error-message {
+  margin-top: 0;
+}
+
+.settings-notice {
+  margin: 0;
+  background: #fffbea;
+  border-left: 4px solid var(--umbc-yellow);
+  padding: 12px;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.settings-form .btn-secondary {
+  background: white;
+  border: 1px solid var(--umbc-border);
+}
+
+.settings-form .btn-secondary:hover:not(:disabled) {
+  background: var(--umbc-light);
+}
+
+.settings-card .btn:focus-visible,
+.settings-form .btn:focus-visible {
+  outline: 2px solid var(--umbc-black);
+  outline-offset: 2px;
+}
+
+.settings-card.settings-danger {
+  border-left-color: #c40000;
+}
+
+.settings-card .btn-danger,
+.settings-form .btn-danger {
+  background: #c40000;
+  color: white;
+}
+
+.settings-card .btn-danger:hover:not(:disabled),
+.settings-form .btn-danger:hover:not(:disabled) {
+  background: #9e0000;
+}
+
+.settings-warning {
+  margin: 0;
+  background: #fff0f0;
+  border-left: 4px solid #c40000;
+  padding: 12px;
+  border-radius: 5px;
+  font-size: 14px;
+}
