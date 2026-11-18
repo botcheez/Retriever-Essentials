@@ -3,13 +3,22 @@ import User from "../models/User.js";
 
 const protectRoute = async (req, res, next) => {
   try {
-    //get token
-    const token = req.header("Authorization").replace("Bearer", "").trim();
-    if(!token) return res.status(401).json({message: "No auth token, access denied"});
+    // get token
+    const authHeader = req.header("Authorization");
+    if (!authHeader) {
+      return res.status(401).json({ message: "No auth token, access denied" });
+    }
+
+    const token = authHeader.replace("Bearer", "").trim();
+    if (!token) {
+      return res.status(401).json({ message: "No auth token, access denied" });
+    }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.userId).select("-passwordHash");
+    const user = await User.findById(decoded.userId)
+      .select("-passwordHash")
+      .populate("organization", "name description active");
 
     if (!user) {
       return res.status(401).json({ message: "Token is not valid" });
@@ -17,9 +26,7 @@ const protectRoute = async (req, res, next) => {
 
     req.user = user;
     next();
-  } 
-  
-  catch (error) {
+  } catch (error) {
     console.log("Authentication error:", error.message);
     res.status(401).json({ message: "Token is not valid" });
   }
