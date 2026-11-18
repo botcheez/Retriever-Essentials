@@ -1,18 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { post } from "../api";
-
+import { Link } from "react-router-dom";
 import Input from "../components/Input";
 import Button from "../components/Button";
 
 function Register() {
-
-  const navigate = useNavigate();
-  const { login } = useAuth();
-
-  const [loading, setLoading] = useState(false);
-
   const [form, setForm] = useState({
     email: "",
     phone: "",
@@ -20,7 +11,6 @@ function Register() {
     password: "",
     confirmPassword: "",
   });
-
   const [error, setError] = useState("");
 
   // One handler for all inputs: each input's "name" says which field to update.
@@ -28,49 +18,22 @@ function Register() {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  //handle submit function
-  async function handleSubmit(e) {
-      e.preventDefault();
+  function handleSubmit(e) {
+    e.preventDefault();
 
-      if (form.password.length < 9) {
-          setError("Password must be at least 9 characters.");
-          return;
-      }
+    // Same rule as the backend User model (passwordHash minLength: 9)
+    if (form.password.length < 9) {
+      setError("Password must be at least 9 characters.");
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
 
-      if (form.password !== form.confirmPassword) {
-          setError("Passwords do not match.");
-          return;
-      }
-
-      setError("");
-      setLoading(true);
-
-      try {
-
-          const data = await post("/auth/register", {
-              email: form.email,
-              phone: form.phone,
-              organization: form.organization,
-              password: form.password
-          });
-
-          //registration also logs the new user in
-          login(data.user, data.token);
-
-          navigate("/dashboard");
-
-      }
-
-      catch (err) {
-
-          setError(err.message);
-
-      }
-
-      finally {
-
-          setLoading(false);
-      }
+    setError("");
+    // Later: await post("/auth/register", form) using the helper in api.js
+    console.log("Register attempt:", form);
   }
 
   return (
@@ -87,9 +50,7 @@ function Register() {
 
         {error && <p className="form-error">{error}</p>}
 
-        <Button type="submit" disabled={loading}>
-          {loading ? "Creating account..." : "Register"}
-        </Button>
+        <Button type="submit">Register</Button>
       </form>
 
       <p className="form-switch">

@@ -1,5 +1,5 @@
 import mongoose, {mongo, Mongoose} from "mongoose";
-import Organization from "./Organization.js";
+import Organization from "./Organization";
 
 const dataSchema = new mongoose.Schema({
     organization: {
